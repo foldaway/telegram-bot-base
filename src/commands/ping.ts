@@ -1,4 +1,4 @@
-import { Command } from '../src/types';
+import { Command } from '../types';
 
 const ping: Command = {
   initialHandler: async (ctx) => {
