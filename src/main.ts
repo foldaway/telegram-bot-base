@@ -31,31 +31,6 @@ async function main() {
   });
 
   const redis = REDIS_URL ? new Redis(REDIS_URL) : new Redis();
-
-  // Authentication
-  bot.use(async (ctx, next) => {
-    const authed = await redis.lrange(KEY_AUTHENTICATED, 0, -1);
-
-    if (ctx.chat === undefined) {
-      return;
-    }
-
-    if (authed.indexOf(ctx.chat.id?.toString() ?? '') !== -1) {
-      return next();
-    }
-
-    const text = ctx.message?.text ?? '';
-    if (text !== 'tired') {
-      ctx.reply('This chat is not authenticated. Please type the password.');
-      return;
-    }
-
-    await redis.lpush(KEY_AUTHENTICATED, ctx.chat.id);
-    ctx.reply('You are authenticated!');
-
-    return next();
-  });
-
   const stage = new Stage([]);
 
   bot.use(session());
