@@ -30,6 +30,6 @@
   "scripts": {
     "start": "node dist/main.js",
     "develop": "ts-node src/main.ts",
-    "build": "tsc -p tsconfig.production.json --outDir dist"
+    "build": "tsc -p tsconfig.production.json"
   }
 }
