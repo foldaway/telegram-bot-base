@@ -3,7 +3,6 @@ config();
 
 import glob from 'glob';
 import { Server } from 'http';
-import Redis from 'ioredis';
 import path from 'path';
 import Telegraf, { BaseScene, session, Stage } from 'telegraf';
 
@@ -15,11 +14,8 @@ const {
   TELEGRAM_BOT_TOKEN,
   TELEGRAM_BOT_USERNAME,
   PORT = '3000',
-  REDIS_URL,
   WEBHOOK_DOMAIN,
 } = process.env;
-
-const KEY_AUTHENTICATED = 'authenticated';
 
 async function main() {
   if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_BOT_USERNAME || !WEBHOOK_DOMAIN) {
@@ -30,7 +26,6 @@ async function main() {
     username: TELEGRAM_BOT_USERNAME,
   });
 
-  const redis = REDIS_URL ? new Redis(REDIS_URL) : new Redis();
   const stage = new Stage([]);
 
   bot.use(session());
