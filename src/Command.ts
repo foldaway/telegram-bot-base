@@ -12,7 +12,7 @@ export default class Command {
     return this._bot;
   }
 
-  get stages(): App.CommandStage[] {
+  get stages(): App.CommandStage<this>[] {
     throw new Error('not implemented');
   }
 

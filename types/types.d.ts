@@ -3,10 +3,12 @@ declare namespace App {
     | { type: 'command'; command: string }
     | { type: 'text'; matcher?: RegExp | ((str: string) => boolean) };
 
-  interface CommandStage {
+  interface CommandStage<
+    TCommand = InstanceType<typeof import('../src/Command').default>
+  > {
     trigger: App.CommandTrigger;
     handle: (
-      this: InstanceType<typeof import('../src/Command').default>,
+      this: TCommand,
       msg: import('node-telegram-bot-api').Message
     ) => Promise<void>;
   }
