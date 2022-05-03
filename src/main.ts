@@ -56,17 +56,24 @@ async function main() {
     if (user.id in userSessions) {
       const commandInstance = userSessions[user.id];
 
-      const isHandled = await commandInstance.handle(msg);
-
       console.log(
-        `[MESSAGE] sessionCommandName=${commandInstance.name} isHandled=${isHandled}`
+        `[MESSAGE] sessionCommandName=${commandInstance.name} isEnded=${commandInstance.isEnded}`
       );
 
-      if (isHandled) {
+      if (commandInstance.isEnded) {
+        delete userSessions[user.id];
+      } else {
+        const isHandled = await commandInstance.handle(msg);
+
+        console.log(`[MESSAGE] isHandled=${isHandled}`);
+
+        if (!isHandled) {
+          // No commands matched
+          bot.sendMessage(msg.chat.id, 'Sorry, I do not understand that.');
+        }
+
         return;
       }
-
-      delete userSessions[user.id];
     }
 
     let isHandled = false;

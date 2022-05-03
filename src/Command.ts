@@ -34,6 +34,7 @@ export default class Command {
       case 'command': {
         if (currentStage.trigger.command === msgText.slice(1)) {
           await currentStage.handle.call(this, msg);
+          this._currentStageIndex += 1;
           return true;
         }
 
@@ -55,10 +56,15 @@ export default class Command {
         }
 
         await currentStage.handle.call(this, msg);
+        this._currentStageIndex += 1;
         return true;
       }
     }
 
     return false;
+  }
+
+  get isEnded(): boolean {
+    return this._currentStageIndex === this.stages.length;
   }
 }
