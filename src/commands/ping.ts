@@ -1,9 +1,21 @@
-import { Command } from '../types';
+import Command from '../Command';
 
-const ping: Command = {
-  initialHandler: async (ctx) => {
-    ctx.reply('pong');
-  },
-};
+export default class PingCommand extends Command {
+  get name(): string {
+    return 'ping';
+  }
 
-export default ping;
+  get stages(): App.CommandStage[] {
+    return [
+      {
+        trigger: {
+          type: 'command',
+          command: 'ping',
+        },
+        async handle(msg) {
+          await this.bot.sendMessage(msg.chat.id, 'pong');
+        },
+      },
+    ];
+  }
+}

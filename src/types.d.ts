@@ -1,11 +1,13 @@
-import { SceneContextMessageUpdate } from 'telegraf/typings/stage';
+declare namespace App {
+  type CommandTrigger =
+    | { type: 'command'; command: string }
+    | { type: 'text'; matcher?: RegExp | ((str: string) => boolean) };
 
-interface Command {
-  initialHandler: (ctx: SceneContextMessageUpdate) => Promise<void>;
-  responseHandler?: (ctx: SceneContextMessageUpdate) => Promise<void>;
-  responseHandlers?: {
-    [option: string]: (ctx: SceneContextMessageUpdate) => Promise<void>;
-  };
-  callbackQueryHandler?: (ctx: SceneContextMessageUpdate) => Promise<void>;
-  manualSceneHandling?: boolean;
+  interface CommandStage {
+    trigger: App.CommandTrigger;
+    handle: (
+      this: InstanceType<typeof import('./Command').default>,
+      msg: import('node-telegram-bot-api').Message
+    ) => Promise<void>;
+  }
 }
