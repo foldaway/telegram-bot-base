@@ -60,8 +60,14 @@ async function main() {
         `[MESSAGE] sessionCommandName=${commandInstance.name} isEnded=${commandInstance.isEnded}`
       );
 
+      const msgText = msg.text ?? '';
+
       if (commandInstance.isEnded) {
         delete userSessions[user.id];
+      } else if (msgText.slice(1) === 'cancel') {
+        delete userSessions[user.id];
+        await bot.sendMessage(msg.chat.id, 'Current command aborted');
+        return;
       } else {
         const isHandled = await commandInstance.handle(msg);
 
