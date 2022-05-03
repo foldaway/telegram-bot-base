@@ -28,7 +28,12 @@ export default class IntroCommand extends Command {
         async handle(msg) {
           this._name = msg.text ?? '';
 
-          await this.bot.sendMessage(msg.chat.id, 'I see, what is your age?');
+          await this.bot.sendMessage(msg.chat.id, 'I see, what is your age?', {
+            reply_markup: {
+              force_reply: true,
+            },
+            reply_to_message_id: msg.message_id,
+          });
         },
       },
       {
