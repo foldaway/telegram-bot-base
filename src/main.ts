@@ -135,7 +135,7 @@ async function main() {
       } else {
         const isHandled = await commandInstance.handle(callbackQuery);
 
-        console.log(`[MESSAGE] isHandled=${isHandled}`);
+        console.log(`[CALLBACK QUERY] isHandled=${isHandled}`);
 
         if (!isHandled) {
           // No commands matched
@@ -156,7 +156,7 @@ async function main() {
       isHandled = await instance.handle(callbackQuery);
 
       console.log(
-        `[MESSAGE] trying commandName=${instance.name} isHandled=${isHandled}`
+        `[CALLBACK QUERY] trying commandName=${instance.name} isHandled=${isHandled}`
       );
 
       if (isHandled) {
@@ -166,7 +166,9 @@ async function main() {
     }
 
     if (!isHandled) {
-      console.log(`[MESSAGE] no command handlers could handle this message`);
+      console.log(
+        `[CALLBACK QUERY] no command handlers could handle this message`
+      );
     }
   });
 
