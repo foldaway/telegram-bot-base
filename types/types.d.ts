@@ -6,7 +6,7 @@ declare namespace App {
   interface CommandStage {
     trigger: App.CommandTrigger;
     handle: (
-      this: InstanceType<typeof import('./Command').default>,
+      this: InstanceType<typeof import('../src/Command').default>,
       msg: import('node-telegram-bot-api').Message
     ) => Promise<void>;
   }
