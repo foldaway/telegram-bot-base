@@ -29,7 +29,7 @@
   },
   "scripts": {
     "start": "node dist/main.js",
-    "develop": "ts-node-dev --respawn src/main.ts",
+    "develop": "ts-node-dev --respawn --watch src,types src/main.ts",
     "build": "tsc -p tsconfig.production.json"
   }
 }
