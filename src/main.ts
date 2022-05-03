@@ -103,9 +103,6 @@ async function main() {
 
     if (!isHandled) {
       console.log(`[MESSAGE] no command handlers could handle this message`);
-
-      // No commands matched
-      bot.sendMessage(msg.chat.id, 'Unsupported response');
     }
   });
 
@@ -170,9 +167,6 @@ async function main() {
 
     if (!isHandled) {
       console.log(`[MESSAGE] no command handlers could handle this message`);
-
-      // No commands matched
-      bot.sendMessage(chatId, 'Unsupported response');
     }
   });
 
