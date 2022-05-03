@@ -7,6 +7,7 @@
     "dotenv": "^8.2.0",
     "glob": "^7.1.6",
     "moment": "^2.29.2",
+    "node-telegram-bot-api": "^0.57.0",
     "typescript": "^4.3.5"
   },
   "devDependencies": {
