@@ -8,6 +8,7 @@ export default class PingCommand extends Command {
   get stages(): App.CommandStage<this>[] {
     return [
       {
+        type: 'text',
         trigger: {
           type: 'command',
           command: 'ping',

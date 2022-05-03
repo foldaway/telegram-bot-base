@@ -11,6 +11,7 @@ export default class IntroCommand extends Command {
   get stages(): App.CommandStage<this>[] {
     return [
       {
+        type: 'text',
         trigger: {
           type: 'command',
           command: 'intro',
@@ -20,6 +21,7 @@ export default class IntroCommand extends Command {
         },
       },
       {
+        type: 'text',
         trigger: {
           type: 'text',
         },
@@ -30,6 +32,7 @@ export default class IntroCommand extends Command {
         },
       },
       {
+        type: 'text',
         trigger: {
           type: 'text',
           matcher: /\d+/,

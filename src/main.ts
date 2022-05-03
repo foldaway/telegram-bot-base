@@ -109,6 +109,73 @@ async function main() {
     }
   });
 
+  bot.on('callback_query', async (callbackQuery) => {
+    const user = callbackQuery.from;
+
+    if (user == null || user.is_bot) {
+      return;
+    }
+
+    const chatId = callbackQuery.message?.chat?.id;
+
+    if (chatId == null) {
+      return;
+    }
+
+    console.log(
+      `[CALLBACK QUERY] userId=${user.id} chatId=${chatId} data=${callbackQuery.data}`
+    );
+
+    if (user.id in userSessions) {
+      const commandInstance = userSessions[user.id];
+
+      console.log(
+        `[CALLBACK QUERY] sessionCommandName=${commandInstance.name} isEnded=${commandInstance.isEnded}`
+      );
+
+      if (commandInstance.isEnded) {
+        delete userSessions[user.id];
+      } else {
+        const isHandled = await commandInstance.handle(callbackQuery);
+
+        console.log(`[MESSAGE] isHandled=${isHandled}`);
+
+        if (!isHandled) {
+          // No commands matched
+          bot.sendMessage(chatId, 'Sorry, I do not understand that.');
+        }
+
+        return;
+      }
+    }
+
+    let isHandled = false;
+
+    for (const commandFile of commandFiles) {
+      const exp = await import(path.resolve(commandFile));
+      const CommandClass = exp.default as typeof Command;
+
+      const instance = new CommandClass(bot);
+      isHandled = await instance.handle(callbackQuery);
+
+      console.log(
+        `[MESSAGE] trying commandName=${instance.name} isHandled=${isHandled}`
+      );
+
+      if (isHandled) {
+        userSessions[user.id] = instance;
+        break;
+      }
+    }
+
+    if (!isHandled) {
+      console.log(`[MESSAGE] no command handlers could handle this message`);
+
+      // No commands matched
+      bot.sendMessage(chatId, 'Unsupported response');
+    }
+  });
+
   bot.on('error', (err) => {
     console.error(err);
   });

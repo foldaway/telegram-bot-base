@@ -1,4 +1,6 @@
-import TelegramBot, { Message } from 'node-telegram-bot-api';
+import TelegramBot, { CallbackQuery, Message } from 'node-telegram-bot-api';
+
+import isCallbackQuery from './util/isCallbackQuery';
 
 export default class Command {
   private readonly _bot: InstanceType<typeof TelegramBot>;
@@ -20,11 +22,31 @@ export default class Command {
     this._bot = bot;
   }
 
-  async handle(msg: Message): Promise<boolean> {
+  async handle(msg: Message | CallbackQuery): Promise<boolean> {
     const currentStage = this.stages[this._currentStageIndex];
 
     if (currentStage == null) {
       console.warn('invalid current state');
+      return false;
+    }
+
+    if (isCallbackQuery(msg)) {
+      if (currentStage.type === 'callback_query') {
+        await currentStage.handle.call(this, msg);
+        this._currentStageIndex += 1;
+        return true;
+      }
+
+      console.warn(
+        'received callback query but current stage is not a callback query handler'
+      );
+      return false;
+    }
+
+    if (currentStage.type === 'callback_query') {
+      console.warn(
+        'received message but current stage is not a message handler'
+      );
       return false;
     }
 
