@@ -1,5 +1,12 @@
 declare namespace App {
-  type TriggerCommand = { type: 'command'; command: string };
+  type TriggerCommand = {
+    type: 'command';
+    /**
+     * Command string (e.g. for /menu, this would be 'menu')
+     */
+    command: string;
+  };
+
   type TriggerText = {
     type: 'text';
     matcher?: RegExp | ((str: string) => boolean);
@@ -8,6 +15,9 @@ declare namespace App {
   interface StageTextHandler<TCommand> {
     type: 'text';
     trigger: App.TriggerCommand | App.TriggerText;
+    /**
+     * Handler function called when a text message is triggered
+     */
     handle: (
       this: TCommand,
       msg: import('node-telegram-bot-api').Message
@@ -16,6 +26,9 @@ declare namespace App {
 
   interface StageCallbackQueryHandler<TCommand> {
     type: 'callback_query';
+    /**
+     * Handler function called when a callback query is triggered
+     */
     handle: (
       this: TCommand,
       callbackQuery: import('node-telegram-bot-api').CallbackQuery

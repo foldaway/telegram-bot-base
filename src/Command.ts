@@ -10,10 +10,16 @@ export default class Command {
     throw new Error('not implemented');
   }
 
+  /**
+   * Get a reference to the telegram bot API
+   */
   get bot(): InstanceType<typeof TelegramBot> {
     return this._bot;
   }
 
+  /**
+   * Definition of stages in this command
+   */
   get stages(): App.CommandStage<this>[] {
     throw new Error('not implemented');
   }
@@ -22,6 +28,11 @@ export default class Command {
     this._bot = bot;
   }
 
+  /**
+   * Async function to handle an incoming message
+   *
+   * @returns whether the message was handled
+   */
   async handle(msg: Message | CallbackQuery): Promise<boolean> {
     const currentStage = this.stages[this._currentStageIndex];
 
@@ -86,6 +97,9 @@ export default class Command {
     return false;
   }
 
+  /**
+   * Whether all the stages of this command have been run through
+   */
   get isEnded(): boolean {
     return this._currentStageIndex === this.stages.length;
   }
