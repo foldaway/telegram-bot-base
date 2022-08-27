@@ -14,7 +14,6 @@ export default class IntroCommand extends Command {
         type: 'text',
         trigger: {
           type: 'command',
-          command: 'intro',
         },
         async handle(msg) {
           await this.bot.sendMessage(msg.chat.id, 'What is your name?');

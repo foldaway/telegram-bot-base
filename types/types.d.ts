@@ -1,10 +1,6 @@
 declare namespace App {
   type TriggerCommand = {
     type: 'command';
-    /**
-     * Command string (e.g. for /menu, this would be 'menu')
-     */
-    command: string;
   };
 
   type TriggerText = {

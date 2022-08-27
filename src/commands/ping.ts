@@ -11,7 +11,6 @@ export default class PingCommand extends Command {
         type: 'text',
         trigger: {
           type: 'command',
-          command: 'ping',
         },
         async handle(msg) {
           await this.bot.sendMessage(msg.chat.id, 'pong');

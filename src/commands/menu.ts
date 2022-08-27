@@ -19,7 +19,6 @@ export default class MenuCommand extends Command {
         type: 'text',
         trigger: {
           type: 'command',
-          command: 'menu',
         },
         async handle(msg) {
           this._prevMessage = await this.bot.sendMessage(

@@ -6,6 +6,12 @@ export default class Command {
   private readonly _bot: InstanceType<typeof TelegramBot>;
   private _currentStageIndex = 0;
 
+  /**
+   * Name of this command
+   *
+   * This is also used as the trigger string.
+   * (e.g. for /menu this would be 'menu')
+   */
   get name(): string {
     throw new Error('not implemented');
   }
@@ -65,7 +71,7 @@ export default class Command {
 
     switch (currentStage.trigger.type) {
       case 'command': {
-        if (currentStage.trigger.command === msgText.slice(1)) {
+        if (this.name === msgText.slice(1)) {
           await currentStage.handle.call(this, msg);
           this._currentStageIndex += 1;
           return true;
