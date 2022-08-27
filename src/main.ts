@@ -23,7 +23,10 @@ async function main() {
 
   const options: TelegramBot.ConstructorOptions = {};
 
-  if (NODE_ENV === 'production' && WEBHOOK_DOMAIN != null) {
+  const isProduction = NODE_ENV === 'production';
+  const isWebhook = isProduction && WEBHOOK_DOMAIN != null;
+
+  if (isWebhook) {
     options.webHook = {
       port: parseInt(PORT, 10),
     };
@@ -34,7 +37,7 @@ async function main() {
 
   const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, options);
 
-  if (NODE_ENV === 'production' && WEBHOOK_DOMAIN != null) {
+  if (isWebhook) {
     await bot.setWebHook(`https://${WEBHOOK_DOMAIN}/telegram`);
   }
 
