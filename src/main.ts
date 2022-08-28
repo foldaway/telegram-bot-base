@@ -2,125 +2,186 @@ import { config } from 'dotenv';
 config();
 
 import glob from 'glob';
-import { Server } from 'http';
+import TelegramBot from 'node-telegram-bot-api';
 import path from 'path';
-import Telegraf, { BaseScene, session, Stage } from 'telegraf';
 
-import { Command } from './types';
-const { leave } = Stage;
+import Command from './Command';
 
 const {
   NODE_ENV,
   TELEGRAM_BOT_TOKEN,
-  TELEGRAM_BOT_USERNAME,
   PORT = '3000',
   WEBHOOK_DOMAIN,
 } = process.env;
 
+const userSessions: Record<number, InstanceType<typeof Command>> = {};
+
 async function main() {
-  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_BOT_USERNAME || !WEBHOOK_DOMAIN) {
+  if (!TELEGRAM_BOT_TOKEN) {
     throw new Error('Missing env vars!');
   }
 
-  const bot = new Telegraf(TELEGRAM_BOT_TOKEN, {
-    username: TELEGRAM_BOT_USERNAME,
-  });
+  const options: TelegramBot.ConstructorOptions = {};
 
-  const stage = new Stage([]);
+  const isProduction = NODE_ENV === 'production';
+  const isWebhook = isProduction && WEBHOOK_DOMAIN != null;
 
-  bot.use(session());
-  //@ts-ignore
-  bot.use(stage.middleware());
-  stage.command('cancel', leave());
+  if (isWebhook) {
+    options.webHook = {
+      port: parseInt(PORT, 10),
+    };
+  } else {
+    options.polling = true;
+    console.log('Polling...');
+  }
+
+  const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, options);
+
+  if (isWebhook) {
+    await bot.setWebHook(`https://${WEBHOOK_DOMAIN}/telegram`);
+  }
 
   const commandFiles = glob.sync(
     path.join(__dirname, './commands/**/*.+(js|ts)')
   );
 
-  for (const commandFile of commandFiles) {
-    const exp = await import(path.resolve(commandFile));
-    const cmd = exp.default as Command;
-    const commandName = path
-      .basename(commandFile)
-      .replace(path.extname(commandFile), '');
+  bot.on('message', async (msg) => {
+    const user = msg.from;
 
-    console.log(`Registering '${commandName}' from '${commandFile}'`);
-
-    const scene = new BaseScene(commandName);
-    scene.enter(cmd.initialHandler);
-
-    const {
-      responseHandler,
-      responseHandlers,
-      manualSceneHandling,
-      callbackQueryHandler,
-    } = cmd;
-
-    if (responseHandlers !== undefined) {
-      // Fixed-answer handlers
-      scene.on('message', (ctx) => {
-        const text = ctx.update.message?.text ?? '';
-        console.log(`Received message: '${text}'`);
-
-        if (text in responseHandlers) {
-          responseHandlers[text](ctx);
-        } else if (responseHandler !== undefined) {
-          responseHandler(ctx);
-        }
-
-        if (manualSceneHandling !== true) {
-          ctx.scene.leave();
-        }
-      });
-    } else if (responseHandler !== undefined) {
-      // Single catch-all handler, for open-ended responses
-      scene.on('message', (ctx) => {
-        responseHandler(ctx);
-        if (manualSceneHandling !== true) {
-          ctx.scene.leave();
-        }
-      });
-    } else {
-      console.error('Unsupported command!');
+    if (user == null || user.is_bot) {
+      return;
     }
 
-    // Inline options response handler
-    if (callbackQueryHandler !== undefined) {
-      scene.on('callback_query', callbackQueryHandler);
+    console.log(
+      `[MESSAGE] userId=${user.id} chatId=${msg.chat.id} text=${msg.text}`
+    );
+
+    if (user.id in userSessions) {
+      const commandInstance = userSessions[user.id];
+
+      console.log(
+        `[MESSAGE] sessionCommandName=${commandInstance.name} isEnded=${commandInstance.isEnded}`
+      );
+
+      const msgText = msg.text ?? '';
+
+      if (commandInstance.isEnded) {
+        delete userSessions[user.id];
+      } else if (msgText.slice(1) === 'cancel') {
+        delete userSessions[user.id];
+        await bot.sendMessage(msg.chat.id, 'Current command aborted');
+        return;
+      } else {
+        const isHandled = await commandInstance.handle(msg);
+
+        console.log(`[MESSAGE] isHandled=${isHandled}`);
+
+        if (!isHandled) {
+          // No commands matched
+          bot.sendMessage(msg.chat.id, 'Sorry, I do not understand that.');
+        }
+
+        return;
+      }
     }
 
-    stage.register(scene);
+    let isHandled = false;
 
-    bot.command(commandName, (ctx) => {
-      console.log(`Processing command: '${commandName}'`);
-      //@ts-ignore
-      ctx.scene.enter(commandName);
-    });
-  }
+    for (const commandFile of commandFiles) {
+      const exp = await import(path.resolve(commandFile));
+      const CommandClass = exp.default as typeof Command;
 
-  //@ts-ignore
-  bot.catch((err, ctx) => {
-    console.error(err);
-    ctx.replyWithMarkdown(`Error occurred:\n\`${err}\``, {
-      reply_to_message_id: ctx.update.message.message_id,
-    });
+      const instance = new CommandClass(bot);
+      isHandled = await instance.handle(msg);
+
+      console.log(
+        `[MESSAGE] trying commandName=${instance.name} isHandled=${isHandled}`
+      );
+
+      if (isHandled) {
+        userSessions[user.id] = instance;
+        break;
+      }
+    }
+
+    if (!isHandled) {
+      console.log(`[MESSAGE] no command handlers could handle this message`);
+    }
   });
 
-  if (NODE_ENV === 'production') {
-    await bot.telegram.setWebhook(`https://${WEBHOOK_DOMAIN}/telegram`);
+  bot.on('callback_query', async (callbackQuery) => {
+    const user = callbackQuery.from;
 
-    return new Promise((resolve) => {
-      bot.startWebhook('/telegram', null, parseInt(PORT, 10));
-      //@ts-ignore
-      (bot.webhookServer as Server).on('close', resolve);
-    });
-  } else {
-    console.log('Polling...');
+    if (user == null || user.is_bot) {
+      return;
+    }
 
-    return new Promise((resolve) => {
-      bot.launch({ polling: { stopCallback: resolve } });
-    });
-  }
+    const chatId = callbackQuery.message?.chat?.id;
+
+    if (chatId == null) {
+      return;
+    }
+
+    console.log(
+      `[CALLBACK QUERY] userId=${user.id} chatId=${chatId} data=${callbackQuery.data}`
+    );
+
+    if (user.id in userSessions) {
+      const commandInstance = userSessions[user.id];
+
+      console.log(
+        `[CALLBACK QUERY] sessionCommandName=${commandInstance.name} isEnded=${commandInstance.isEnded}`
+      );
+
+      if (commandInstance.isEnded) {
+        delete userSessions[user.id];
+      } else {
+        const isHandled = await commandInstance.handle(callbackQuery);
+
+        console.log(`[CALLBACK QUERY] isHandled=${isHandled}`);
+
+        if (!isHandled) {
+          // No commands matched
+          bot.sendMessage(chatId, 'Sorry, I do not understand that.');
+        }
+
+        return;
+      }
+    }
+
+    let isHandled = false;
+
+    for (const commandFile of commandFiles) {
+      const exp = await import(path.resolve(commandFile));
+      const CommandClass = exp.default as typeof Command;
+
+      const instance = new CommandClass(bot);
+      isHandled = await instance.handle(callbackQuery);
+
+      console.log(
+        `[CALLBACK QUERY] trying commandName=${instance.name} isHandled=${isHandled}`
+      );
+
+      if (isHandled) {
+        userSessions[user.id] = instance;
+        break;
+      }
+    }
+
+    if (!isHandled) {
+      console.log(
+        `[CALLBACK QUERY] no command handlers could handle this message`
+      );
+    }
+  });
+
+  bot.on('error', (err) => {
+    console.error(err);
+  });
+
+  return new Promise((resolve) => {
+    process.on('SIGINT', resolve);
+  });
 }
 
 main()
