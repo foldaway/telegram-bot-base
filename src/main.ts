@@ -68,6 +68,7 @@ async function main() {
       if (commandInstance.isEnded) {
         delete userSessions[user.id];
       } else if (msgText.slice(1) === 'cancel') {
+        await commandInstance.cleanup();
         delete userSessions[user.id];
         await bot.sendMessage(msg.chat.id, 'Current command aborted');
         return;
@@ -78,7 +79,10 @@ async function main() {
 
         if (!isHandled) {
           // No commands matched
-          bot.sendMessage(msg.chat.id, 'Sorry, I do not understand that.');
+          bot.sendMessage(
+            msg.chat.id,
+            `Sorry, I do not understand that. You have an ongoing /${commandInstance.name} session, use /cancel to abort.`
+          );
         }
 
         return;
@@ -142,7 +146,10 @@ async function main() {
 
         if (!isHandled) {
           // No commands matched
-          bot.sendMessage(chatId, 'Sorry, I do not understand that.');
+          bot.sendMessage(
+            chatId,
+            `Sorry, I do not understand that. You have an ongoing /${commandInstance.name} session, use /cancel to abort.`
+          );
         }
 
         return;

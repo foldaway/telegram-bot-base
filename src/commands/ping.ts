@@ -5,15 +5,20 @@ export default class PingCommand extends Command {
     return 'ping';
   }
 
-  get stages(): App.CommandStage<this>[] {
+  get stages(): App.Stage<this>[] {
     return [
       {
         type: 'text',
         trigger: {
           type: 'command',
         },
-        async handle(msg) {
-          await this.bot.sendMessage(msg.chat.id, 'pong');
+        async handle() {
+          return [
+            {
+              type: 'text',
+              text: 'pong',
+            },
+          ];
         },
       },
     ];

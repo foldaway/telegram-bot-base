@@ -8,15 +8,20 @@ export default class IntroCommand extends Command {
     return 'intro';
   }
 
-  get stages(): App.CommandStage<this>[] {
+  get stages(): App.Stage<this>[] {
     return [
       {
         type: 'text',
         trigger: {
           type: 'command',
         },
-        async handle(msg) {
-          await this.bot.sendMessage(msg.chat.id, 'What is your name?');
+        async handle() {
+          return [
+            {
+              type: 'text',
+              text: 'What is your name?',
+            },
+          ];
         },
       },
       {
@@ -27,12 +32,18 @@ export default class IntroCommand extends Command {
         async handle(msg) {
           this._name = msg.text ?? '';
 
-          await this.bot.sendMessage(msg.chat.id, 'I see, what is your age?', {
-            reply_markup: {
-              force_reply: true,
+          return [
+            {
+              type: 'text',
+              text: 'I see, what is your age?',
+              options: {
+                reply_markup: {
+                  force_reply: true,
+                },
+                reply_to_message_id: msg.message_id,
+              },
             },
-            reply_to_message_id: msg.message_id,
-          });
+          ];
         },
       },
       {
@@ -44,10 +55,12 @@ export default class IntroCommand extends Command {
         async handle(msg) {
           this._age = parseInt(msg.text ?? '0');
 
-          await this.bot.sendMessage(
-            msg.chat.id,
-            `Hi ${this._name} of age ${this._age}!`
-          );
+          return [
+            {
+              type: 'text',
+              text: `Hi ${this._name} of age ${this._age}!`,
+            },
+          ];
         },
       },
     ];

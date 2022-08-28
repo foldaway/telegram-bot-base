@@ -8,16 +8,29 @@ declare namespace App {
     matcher?: RegExp | ((str: string) => boolean);
   };
 
+  interface ResponseMessage {
+    type: 'text';
+    text: string;
+    options?: import('node-telegram-bot-api').SendMessageOptions;
+  }
+
+  interface ResponsePhoto {
+    type: 'photo';
+    data: string | import('stream').Stream | Buffer;
+  }
+
+  type Response = ResponseMessage | ResponsePhoto;
+
   interface StageTextHandler<TCommand> {
     type: 'text';
-    trigger: App.TriggerCommand | App.TriggerText;
+    trigger: TriggerCommand | TriggerText;
     /**
      * Handler function called when a text message is triggered
      */
     handle: (
       this: TCommand,
       msg: import('node-telegram-bot-api').Message
-    ) => Promise<void>;
+    ) => Promise<Response[] | null>;
   }
 
   interface StageCallbackQueryHandler<TCommand> {
@@ -28,10 +41,10 @@ declare namespace App {
     handle: (
       this: TCommand,
       callbackQuery: import('node-telegram-bot-api').CallbackQuery
-    ) => Promise<void>;
+    ) => Promise<Response[] | null>;
   }
 
-  type CommandStage<
-    TCommand = InstanceType<typeof import('../src/Command').default>
-  > = StageTextHandler<TCommand> | StageCallbackQueryHandler<TCommand>;
+  type Stage<TCommand> =
+    | StageTextHandler<TCommand>
+    | StageCallbackQueryHandler<TCommand>;
 }
