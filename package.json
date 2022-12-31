@@ -29,8 +29,9 @@
     "ts-node-dev": "^1.1.8"
   },
   "scripts": {
+    "clean": "rm -Rf dist",
     "start": "node dist/main.js",
     "develop": "ts-node-dev --respawn --watch src,types src/main.ts",
-    "build": "tsc -p tsconfig.production.json"
+    "build": "esbuild `find src \\( -name '*.ts' \\)` --platform=node --outdir=dist --target=node16 --bundle --sourcemap"
   }
 }

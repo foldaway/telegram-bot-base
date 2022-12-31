@@ -1,26 +1,24 @@
-import Command from '../Command';
-
-export default class PingCommand extends Command {
-  get name(): string {
-    return 'ping';
-  }
-
-  get stages(): App.Stage<this>[] {
-    return [
-      {
-        type: 'text',
-        trigger: {
-          type: 'command',
-        },
-        async handle() {
-          return [
+const PingCommand: App.CommandDefinition = {
+  name: 'ping',
+  initialState: undefined,
+  stages: [
+    {
+      type: 'text',
+      trigger: {
+        type: 'command',
+      },
+      async handle() {
+        return {
+          responses: [
             {
               type: 'text',
               text: 'pong',
             },
-          ];
-        },
+          ],
+        };
       },
-    ];
-  }
-}
+    },
+  ],
+};
+
+export default PingCommand;

@@ -1,24 +1,20 @@
 import axios from 'axios';
 
-import Command from '../Command';
-
 const DATA_RANDOM_IMAGE = 'random_image';
 const DATA_RANDOM_DAD_JOKE = 'random_dad_joke';
 
-export default class MenuCommand extends Command {
-  get name(): string {
-    return 'menu';
-  }
-
-  get stages(): App.Stage<this>[] {
-    return [
-      {
-        type: 'text',
-        trigger: {
-          type: 'command',
-        },
-        async handle() {
-          return [
+const MenuCommand: App.CommandDefinition = {
+  name: 'menu',
+  initialState: undefined,
+  stages: [
+    {
+      type: 'text',
+      trigger: {
+        type: 'command',
+      },
+      async handle() {
+        return {
+          responses: [
             {
               type: 'text',
               text: 'Pick an option',
@@ -39,41 +35,47 @@ export default class MenuCommand extends Command {
                 },
               },
             },
-          ];
-        },
+          ],
+        };
       },
-      {
-        type: 'callback_query',
-        async handle(callbackQuery) {
-          switch (callbackQuery.data) {
-            case DATA_RANDOM_IMAGE: {
-              return [
+    },
+    {
+      type: 'callback_query',
+      async handle(callbackQuery) {
+        switch (callbackQuery.data) {
+          case DATA_RANDOM_IMAGE: {
+            return {
+              responses: [
                 {
                   type: 'photo',
                   data: 'https://source.unsplash.com/random',
                 },
-              ];
-            }
-            case DATA_RANDOM_DAD_JOKE: {
-              const resp = await axios.get('https://icanhazdadjoke.com', {
-                headers: {
-                  Accept: 'text/plain',
-                  'User-Agent': 'telegram-bot-base',
-                },
-              });
+              ],
+            };
+          }
+          case DATA_RANDOM_DAD_JOKE: {
+            const resp = await axios.get('https://icanhazdadjoke.com', {
+              headers: {
+                Accept: 'text/plain',
+                'User-Agent': 'telegram-bot-base',
+              },
+            });
 
-              return [
+            return {
+              responses: [
                 {
                   type: 'text',
                   text: resp.data,
                 },
-              ];
-            }
+              ],
+            };
           }
+        }
 
-          return null;
-        },
+        return null;
       },
-    ];
-  }
-}
+    },
+  ],
+};
+
+export default MenuCommand;

@@ -1,0 +1,37 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+
+Description: telegram-bot-base
+
+Parameters:
+  TelegramBotToken:
+    Description: Bot token
+    Type: String
+
+Globals:
+  Function:
+    MemorySize: 128
+    Timeout: 30
+
+Resources:
+  BotFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: dist/
+      FunctionName: telegram-bot-base
+      Handler: lambda.lambdaHandler
+      Runtime: nodejs16.x
+      FunctionUrlConfig:
+        AuthType: NONE
+      Environment:
+        Variables:
+          TELEGRAM_BOT_TOKEN: !Ref TelegramBotToken
+          NODE_ENV: production
+          NODE_OPTIONS: --enable-source-maps
+
+Outputs:
+  FunctionUrlEndpoint:
+    Description: "Lambda Function URL Endpoint"
+    Value:
+      Fn::GetAtt: BotFunctionUrl.FunctionUrl
+

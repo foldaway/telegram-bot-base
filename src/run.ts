@@ -5,18 +5,13 @@ import glob from 'glob';
 import TelegramBot from 'node-telegram-bot-api';
 import path from 'path';
 
-import Command from './Command';
+import CommandEngine from './CommandEngine';
 
-const {
-  NODE_ENV,
-  TELEGRAM_BOT_TOKEN,
-  PORT = '3000',
-  WEBHOOK_DOMAIN,
-} = process.env;
+const { NODE_ENV, TELEGRAM_BOT_TOKEN, WEBHOOK_DOMAIN } = process.env;
 
-const userSessions: Record<number, InstanceType<typeof Command>> = {};
+const userSessions: Record<number, CommandEngine> = {};
 
-async function main() {
+export default async function run(update?: TelegramBot.Update) {
   if (!TELEGRAM_BOT_TOKEN) {
     throw new Error('Missing env vars!');
   }
@@ -26,11 +21,7 @@ async function main() {
   const isProduction = NODE_ENV === 'production';
   const isWebhook = isProduction && WEBHOOK_DOMAIN != null;
 
-  if (isWebhook) {
-    options.webHook = {
-      port: parseInt(PORT, 10),
-    };
-  } else {
+  if (!isProduction) {
     options.polling = true;
     console.log('Polling...');
   }
@@ -92,10 +83,10 @@ async function main() {
     let isHandled = false;
 
     for (const commandFile of commandFiles) {
-      const exp = await import(path.resolve(commandFile));
-      const CommandClass = exp.default as typeof Command;
+      const exp = require(path.resolve(commandFile));
+      const commandDefinition = exp.default as App.CommandDefinition;
 
-      const instance = new CommandClass(bot);
+      const instance = new CommandEngine(bot, commandDefinition);
       isHandled = await instance.handle(msg);
 
       console.log(
@@ -160,9 +151,9 @@ async function main() {
 
     for (const commandFile of commandFiles) {
       const exp = await import(path.resolve(commandFile));
-      const CommandClass = exp.default as typeof Command;
+      const commandDefinition = exp.default as App.CommandDefinition;
 
-      const instance = new CommandClass(bot);
+      const instance = new CommandEngine(bot, commandDefinition);
       isHandled = await instance.handle(callbackQuery);
 
       console.log(
@@ -186,14 +177,11 @@ async function main() {
     console.error(err);
   });
 
+  if (update != null) {
+    bot.processUpdate(update);
+  }
+
   return new Promise((resolve) => {
     process.on('SIGINT', resolve);
   });
 }
-
-main()
-  .then(() => process.exit(0))
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  });

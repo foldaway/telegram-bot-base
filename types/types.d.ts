@@ -8,43 +8,59 @@ declare namespace App {
     matcher?: RegExp | ((str: string) => boolean);
   };
 
-  interface ResponseMessage {
+  interface ChatResponseMessage {
     type: 'text';
     text: string;
     options?: import('node-telegram-bot-api').SendMessageOptions;
   }
 
-  interface ResponsePhoto {
+  interface ChatResponsePhoto {
     type: 'photo';
     data: string | import('stream').Stream | Buffer;
   }
 
-  type Response = ResponseMessage | ResponsePhoto;
+  type ChatResponse = ChatResponseMessage | ChatResponsePhoto;
 
-  interface StageTextHandler<TCommand> {
+  interface StageResponse<TState> {
+    responses: ChatResponse[];
+    nextState?: TState;
+  }
+
+  interface StageTextHandler<TState> {
     type: 'text';
     trigger: TriggerCommand | TriggerText;
     /**
      * Handler function called when a text message is triggered
      */
     handle: (
-      this: TCommand,
-      msg: import('node-telegram-bot-api').Message
-    ) => Promise<Response[] | null>;
+      msg: import('node-telegram-bot-api').Message,
+      prevState: TState
+    ) => Promise<StageResponse<TState> | null>;
   }
 
-  interface StageCallbackQueryHandler<TCommand> {
+  interface StageCallbackQueryHandler<TState> {
     type: 'callback_query';
     /**
      * Handler function called when a callback query is triggered
      */
     handle: (
-      this: TCommand,
-      callbackQuery: import('node-telegram-bot-api').CallbackQuery
-    ) => Promise<Response[] | null>;
+      callbackQuery: import('node-telegram-bot-api').CallbackQuery,
+      prevState: TState
+    ) => Promise<StageResponse<TState> | null>;
   }
 
-  type Stage<TCommand> =
-    | StageTextHandler<TCommand>
-    | StageCallbackQueryHandler<TCommand>;
+  type Stage<TState> =
+    | StageTextHandler<TState>
+    | StageCallbackQueryHandler<TState>;
+
+  interface CommandDefinition<TState = undefined> {
+    /**
+     * Name of this command.
+     *
+     * This is also used as the trigger string. (e.g. for /menu this would be 'menu')
+     */
+    name: string;
+    initialState: TState;
+    stages: Stage<TState>[];
+  }
 }
