@@ -8,7 +8,7 @@ import path from 'path';
 
 import CommandEngine from './CommandEngine';
 
-const { NODE_ENV, TELEGRAM_BOT_TOKEN, WEBHOOK_DOMAIN } = process.env;
+const { NODE_ENV, TELEGRAM_BOT_TOKEN } = process.env;
 
 const db = new DynamoDB.DocumentClient();
 
@@ -22,7 +22,6 @@ export default async function run(update?: TelegramBot.Update) {
   const options: TelegramBot.ConstructorOptions = {};
 
   const isProduction = NODE_ENV === 'production';
-  const isWebhook = isProduction && WEBHOOK_DOMAIN != null;
 
   if (!isProduction) {
     options.polling = true;
@@ -30,10 +29,6 @@ export default async function run(update?: TelegramBot.Update) {
   }
 
   const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, options);
-
-  if (isWebhook) {
-    await bot.setWebHook(`https://${WEBHOOK_DOMAIN}/telegram`);
-  }
 
   const commandFiles = glob.sync(
     path.join(__dirname, './commands/**/*.+(js|ts)')

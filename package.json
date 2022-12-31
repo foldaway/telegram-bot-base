@@ -33,6 +33,7 @@
     "clean": "rm -Rf dist",
     "start": "node dist/main.js",
     "develop": "ts-node-dev --respawn --watch src,types src/main.ts",
+    "set-webhook": "ts-node scripts/set-webhook.ts",
     "build": "esbuild `find src \\( -name '*.ts' \\)` --platform=node --outdir=dist --target=node16 --bundle --sourcemap"
   }
 }

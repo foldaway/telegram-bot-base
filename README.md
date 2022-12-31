@@ -8,3 +8,8 @@ There is no local development mode, and this command can be used to deploy local
 ```shell
 yarn clean && yarn build && sam build && sam deploy
 ```
+
+### Setting webhook for production
+```shell
+yarn set-webhook <AWS Lambda Function URL>
+```
