@@ -1,6 +1,7 @@
 import { config } from 'dotenv';
 config();
 
+import { DynamoDB } from 'aws-sdk';
 import glob from 'glob';
 import TelegramBot from 'node-telegram-bot-api';
 import path from 'path';
@@ -9,7 +10,9 @@ import CommandEngine from './CommandEngine';
 
 const { NODE_ENV, TELEGRAM_BOT_TOKEN, WEBHOOK_DOMAIN } = process.env;
 
-const userSessions: Record<number, CommandEngine> = {};
+const db = new DynamoDB.DocumentClient();
+
+const TableName = process.env.TABLE_NAME!;
 
 export default async function run(update?: TelegramBot.Update) {
   if (!TELEGRAM_BOT_TOKEN) {
@@ -37,6 +40,7 @@ export default async function run(update?: TelegramBot.Update) {
   );
 
   bot.on('message', async (msg) => {
+    const chatId = msg.chat.id;
     const user = msg.from;
 
     if (user == null || user.is_bot) {
@@ -47,8 +51,20 @@ export default async function run(update?: TelegramBot.Update) {
       `[MESSAGE] userId=${user.id} chatId=${msg.chat.id} text=${msg.text}`
     );
 
-    if (user.id in userSessions) {
-      const commandInstance = userSessions[user.id];
+    const existingChatSession = await db
+      .get({
+        TableName,
+        Key: {
+          chatId,
+        },
+      })
+      .promise();
+
+    if (existingChatSession.Item != null) {
+      const commandInstance = CommandEngine.restoreSnapshot(
+        bot,
+        existingChatSession.Item.snapshot
+      );
 
       console.log(
         `[MESSAGE] sessionCommandName=${commandInstance.name} isEnded=${commandInstance.isEnded}`
@@ -57,10 +73,24 @@ export default async function run(update?: TelegramBot.Update) {
       const msgText = msg.text ?? '';
 
       if (commandInstance.isEnded) {
-        delete userSessions[user.id];
+        await db
+          .delete({
+            TableName,
+            Key: {
+              chatId,
+            },
+          })
+          .promise();
       } else if (msgText.slice(1) === 'cancel') {
         await commandInstance.cleanup();
-        delete userSessions[user.id];
+        await db
+          .delete({
+            TableName,
+            Key: {
+              chatId,
+            },
+          })
+          .promise();
         await bot.sendMessage(msg.chat.id, 'Current command aborted');
         return;
       } else {
@@ -74,6 +104,16 @@ export default async function run(update?: TelegramBot.Update) {
             msg.chat.id,
             `Sorry, I do not understand that. You have an ongoing /${commandInstance.name} session, use /cancel to abort.`
           );
+        } else {
+          await db
+            .put({
+              TableName,
+              Item: {
+                chatId,
+                snapshot: commandInstance.snapshot(),
+              },
+            })
+            .promise();
         }
 
         return;
@@ -94,7 +134,15 @@ export default async function run(update?: TelegramBot.Update) {
       );
 
       if (isHandled) {
-        userSessions[user.id] = instance;
+        await db
+          .put({
+            TableName,
+            Item: {
+              chatId,
+              snapshot: instance.snapshot(),
+            },
+          })
+          .promise();
         break;
       }
     }
@@ -121,15 +169,34 @@ export default async function run(update?: TelegramBot.Update) {
       `[CALLBACK QUERY] userId=${user.id} chatId=${chatId} data=${callbackQuery.data}`
     );
 
-    if (user.id in userSessions) {
-      const commandInstance = userSessions[user.id];
+    const existingChatSession = await db
+      .get({
+        TableName,
+        Key: {
+          chatId,
+        },
+      })
+      .promise();
+
+    if (existingChatSession.Item != null) {
+      const commandInstance = CommandEngine.restoreSnapshot(
+        bot,
+        existingChatSession.Item.snapshot
+      );
 
       console.log(
         `[CALLBACK QUERY] sessionCommandName=${commandInstance.name} isEnded=${commandInstance.isEnded}`
       );
 
       if (commandInstance.isEnded) {
-        delete userSessions[user.id];
+        await db
+          .delete({
+            TableName,
+            Key: {
+              chatId,
+            },
+          })
+          .promise();
       } else {
         const isHandled = await commandInstance.handle(callbackQuery);
 
@@ -161,7 +228,15 @@ export default async function run(update?: TelegramBot.Update) {
       );
 
       if (isHandled) {
-        userSessions[user.id] = instance;
+        await db
+          .put({
+            TableName,
+            Item: {
+              chatId,
+              snapshot: instance.snapshot(),
+            },
+          })
+          .promise();
         break;
       }
     }

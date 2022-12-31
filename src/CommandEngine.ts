@@ -180,14 +180,18 @@ export default class CommandEngine<TState = undefined> {
         break;
       }
 
-      await this._bot.deleteMessage(
-        prevMessage.chatId,
-        prevMessage.messageId.toString()
-      );
+      try {
+        await this._bot.deleteMessage(
+          prevMessage.chatId,
+          prevMessage.messageId.toString()
+        );
+      } catch (e) {
+        console.error(e);
+      }
     }
   }
 
-  snapshot(): string {
+  snapshot() {
     const record: CommandSnapshot<TState> = {
       currentStageIndex: this._currentStageIndex,
       commandDefinitionName: this._commandDefinition.name,
@@ -195,7 +199,7 @@ export default class CommandEngine<TState = undefined> {
       state: this._state,
     };
 
-    return JSON.stringify(record);
+    return record;
   }
 
   static restoreSnapshot<TState>(
