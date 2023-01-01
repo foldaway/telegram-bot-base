@@ -12,7 +12,7 @@ const { NODE_ENV, TELEGRAM_BOT_TOKEN } = process.env;
 
 const db = new DynamoDB.DocumentClient();
 
-const TableName = process.env.TABLE_NAME!;
+const TableNameSession = 'telegram-bot-base-session-table';
 
 export default async function run(update?: TelegramBot.Update) {
   if (!TELEGRAM_BOT_TOKEN) {
@@ -48,7 +48,7 @@ export default async function run(update?: TelegramBot.Update) {
 
     const existingChatSession = await db
       .get({
-        TableName,
+        TableName: TableNameSession,
         Key: {
           chatId,
         },
@@ -70,7 +70,7 @@ export default async function run(update?: TelegramBot.Update) {
       if (commandInstance.isEnded) {
         await db
           .delete({
-            TableName,
+            TableName: TableNameSession,
             Key: {
               chatId,
             },
@@ -80,7 +80,7 @@ export default async function run(update?: TelegramBot.Update) {
         await commandInstance.cleanup();
         await db
           .delete({
-            TableName,
+            TableName: TableNameSession,
             Key: {
               chatId,
             },
@@ -102,7 +102,7 @@ export default async function run(update?: TelegramBot.Update) {
         } else {
           await db
             .put({
-              TableName,
+              TableName: TableNameSession,
               Item: {
                 chatId,
                 snapshot: commandInstance.snapshot(),
@@ -131,7 +131,7 @@ export default async function run(update?: TelegramBot.Update) {
       if (isHandled) {
         await db
           .put({
-            TableName,
+            TableName: TableNameSession,
             Item: {
               chatId,
               snapshot: instance.snapshot(),
@@ -166,7 +166,7 @@ export default async function run(update?: TelegramBot.Update) {
 
     const existingChatSession = await db
       .get({
-        TableName,
+        TableName: TableNameSession,
         Key: {
           chatId,
         },
@@ -186,7 +186,7 @@ export default async function run(update?: TelegramBot.Update) {
       if (commandInstance.isEnded) {
         await db
           .delete({
-            TableName,
+            TableName: TableNameSession,
             Key: {
               chatId,
             },
@@ -206,7 +206,7 @@ export default async function run(update?: TelegramBot.Update) {
         } else {
           await db
             .put({
-              TableName,
+              TableName: TableNameSession,
               Item: {
                 chatId,
                 snapshot: commandInstance.snapshot(),
@@ -235,7 +235,7 @@ export default async function run(update?: TelegramBot.Update) {
       if (isHandled) {
         await db
           .put({
-            TableName,
+            TableName: TableNameSession,
             Item: {
               chatId,
               snapshot: instance.snapshot(),
