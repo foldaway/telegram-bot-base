@@ -144,6 +144,15 @@ export default class CommandEngine<TState = undefined> {
           message = await this._bot.sendPhoto(chatId, response.data);
           break;
         }
+        case 'file': {
+          message = await this._bot.sendDocument(
+            chatId,
+            response.data,
+            response.options,
+            response.fileOptions
+          );
+          break;
+        }
       }
 
       if (message != null) {

@@ -19,7 +19,17 @@ declare namespace App {
     data: string | import('stream').Stream | Buffer;
   }
 
-  type ChatResponse = ChatResponseMessage | ChatResponsePhoto;
+  interface ChatResponseFile {
+    type: 'file';
+    data: string | import('stream').Stream | Buffer;
+    options?: import('node-telegram-bot-api').SendDocumentOptions;
+    fileOptions?: import('node-telegram-bot-api').FileOptions;
+  }
+
+  type ChatResponse =
+    | ChatResponseMessage
+    | ChatResponsePhoto
+    | ChatResponseFile;
 
   interface StageResponse<TState> {
     responses: ChatResponse[];
