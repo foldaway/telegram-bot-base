@@ -37,7 +37,7 @@ Resources:
       PrimaryKey:
         Name: chatId
         Type: Number
-      TableName: session-table
+      TableName: telegram-bot-base-session-table
 
 Outputs:
   FunctionUrlEndpoint:
