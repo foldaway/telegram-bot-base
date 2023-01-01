@@ -68,7 +68,8 @@ export default class CommandEngine<TState = undefined> {
 
         switch (currentStage.trigger.type) {
           case 'command': {
-            if (this._commandDefinition.name === msgText.slice(1)) {
+            const text = msgText.slice(1).split('@')[0];
+            if (this._commandDefinition.name === text) {
               stageResponse = await currentStage.handle(msg, this._state);
               this._currentStageIndex += 1;
               break;
