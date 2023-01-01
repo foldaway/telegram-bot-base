@@ -203,6 +203,16 @@ export default async function run(update?: TelegramBot.Update) {
             chatId,
             `Sorry, I do not understand that. You have an ongoing /${commandInstance.name} session, use /cancel to abort.`
           );
+        } else {
+          await db
+            .put({
+              TableName,
+              Item: {
+                chatId,
+                snapshot: commandInstance.snapshot(),
+              },
+            })
+            .promise();
         }
 
         return;
