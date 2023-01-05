@@ -144,6 +144,13 @@ export default async function run(update?: TelegramBot.Update) {
 
     if (!isHandled) {
       console.log(`[MESSAGE] no command handlers could handle this message`);
+
+      await bot.sendMessage(chatId, 'Sorry, I do not understand that.', {
+        reply_to_message_id: msg.message_id,
+        reply_markup: {
+          remove_keyboard: true,
+        },
+      });
     }
   });
 
